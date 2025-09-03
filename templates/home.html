@@ -1,0 +1,85 @@
+{% extends "layout.html" %}
+
+{% block title %}ResumAI - Home{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-center">ResumAI</h1>
+<p class="text-center text-gray-600">Generate resumes with ease using AI</p>
+
+<form action="/preview" method="POST" class="space-y-4">
+    <div>
+        <label class="block font-medium">Full Name</label>
+        <input type="text" name="name" required class="w-full p-2 border rounded-md">
+    </div>
+    <div>
+        <label class="block font-medium">Email</label>
+        <input type="email" name="email" required class="w-full p-2 border rounded-md">
+    </div>
+    <div>
+        <label class="block font-medium">Phone Number</label>
+        <input type="text" name="phone" required class="w-full p-2 border rounded-md">
+    </div>
+    <div>
+        <label class="block font-medium">Professional Summary</label>
+        <textarea id="summary" name="summary" rows="3" required class="w-full p-2 border rounded-md"></textarea>
+        <button type="button" onClick="getSuggestion(event, 'summary')" class="mt-2 text-sm text-blue-600 hover:underline">
+            Suggest Summary
+        </button>
+    </div>
+    <div>
+        <label class="block font-medium">Work Experience</label>
+        <textarea id="experience" name="experience" rows="3" required class="w-full p-2 border rounded-md"></textarea>
+        <button type="button" onClick="getSuggestion(event, 'experience')" class="mt-2 text-sm text-blue-600 hover:underline">
+            Suggest Experience
+        </button>
+    </div>
+    <div>
+        <label class="block font-medium">Education</label>
+        <textarea id="education" name="education" rows="3" required class="w-full p-2 border rounded-md"></textarea>
+        <button type="button" onClick="getSuggestion(event, 'education')" class="mt-2 text-sm text-blue-600 hover:underline">
+            Suggest Education
+        </button>
+    </div>
+    <div>
+        <label class="block font-medium">Skills (comma-separated)</label>
+        <input type="text" name="skills" required class="w-full p-2 border rounded-md">
+    </div>
+
+    <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">Preview Resume</button>
+</form>
+
+<script>
+async function getSuggestion(event, section) {
+    const button = event.target;
+    const textarea = document.getElementById(section);
+    const originalText = button.textContent;
+    const context = textarea.value;
+
+    // Show loading state
+    button.textContent = "Loading...";
+    button.disabled = true;
+
+    try {
+        const response = await fetch('/suggest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ section, context }),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            textarea.value = data.suggestion || textarea.value;
+        } else {
+            alert('Error fetching suggestion');
+        }
+    } catch (err) {
+        alert('Request failed: ' + err);
+        console.error(err);
+    } finally {
+        // Restore button state
+        button.textContent = originalText;
+        button.disabled = false;
+    }
+}
+</script>
+{% endblock %}

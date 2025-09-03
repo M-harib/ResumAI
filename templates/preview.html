@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+
+{% block title %}Preview Resume{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold">{{ data.name }}</h1>
+<p>{{ data.email }} | {{ data.phone }}</p>
+
+<hr>
+
+<h2 class="text-2xl font-bold mt-2">Summary</h2>
+<p>{{ data.summary }}</p>
+
+<h2 class="text-2xl font-bold mt-2">Experience</h2>
+<p>{{ data.experience }}</p>
+
+<h2 class="text-2xl font-bold mt-2">Education</h2>
+<p>{{ data.education }}</p>
+
+<h2 class="text-2xl font-bold mt-2">Skills</h2>
+<ul class="list-disc list-inside">
+    {% for skill in data.skills %}
+       <li>{{ skill.strip() }}</li>
+    {% endfor %}
+</ul>
+
+<form action="/download" method="POST">
+    {% for key, value in data.items() %}
+        {% if value is string %}
+            <input type="hidden" name="{{ key }}" value="{{ value }}">
+        {% else %}
+            <input type="hidden" name="{{ key }}" value="{{ ','.join(value) }}">
+        {% endif %}
+    {% endfor %}
+    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        Download as PDF
+    </button>
+</form>
+{% endblock %}
