@@ -1,28 +1,149 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8" />
+<title>Resume PDF</title>
 <style>
-body {font-family: Arial; padding: 20px;}
-h1, h2 { margin: 0; }
-hr { margin: 10px 0; }
+/* === PAGE / PRINT === */
+@page { margin: 20mm 15mm 20mm 15mm; }
+body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #222; margin: 0; }
+.container { width: 100%; }
+
+/* Header */
+.header { text-align: center; margin-bottom: 8px; }
+.name { font-size: 24px; font-weight: 700; letter-spacing: 0.5px; }
+.contact { font-size: 10.5px; color: #444; margin-top: 6px; }
+.contact a { color: #444; text-decoration: none; }
+
+/* Layout using table (xhtml2pdf friendly) */
+.columns { width: 100%; border-collapse: collapse; }
+.col-left { width: 30%; vertical-align: top; padding-right: 12px; }
+.col-right { width: 70%; vertical-align: top; padding-left: 12px; }
+
+/* Section title */
+.section { margin-bottom: 10px; }
+.section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; padding-bottom: 3px; border-bottom: 1px solid #ddd; }
+
+/* Education & Skills list (left column) */
+.side-list { font-size: 11px; margin: 6px 0 12px 0; }
+.side-list li { margin-bottom: 6px; }
+
+/* Right column content */
+.summary { margin-bottom: 8px; }
+.summary p { margin: 0 0 8px 0; line-height: 1.25; }
+
+.project, .experience-item { margin-bottom: 8px; }
+.item-title { font-weight: 700; font-size: 12px; }
+.item-meta { float: right; font-size: 10px; color: #666; }
+.item-sub { font-style: italic; font-size: 11px; color: #333; margin-bottom: 4px; }
+.item-bullets { margin: 4px 0 6px 14px; }
+.item-bullets li { margin-bottom: 4px; }
+
+/* Skills chips */
+.skill-chip { display: inline-block; border: 1px solid #ddd; padding: 2px 6px; margin: 3px 4px 3px 0; font-size: 10.5px; border-radius: 3px; }
+
+/* Small helpers */
+.clearfix::after { content: ""; display: table; clear: both; }
+
+/* Make sure long words wrap in pdf engines */
+.word-wrap { word-wrap: break-word; }
+
 </style>
 </head>
 <body>
-<h1>{{ data.name }}</h1>
-<p>{{ data.email }} | {{ data.phone }}</p>
-<hr>
-<h2>Summary</h2>
-<p>{{ data.summary }}</p>
-<h2>Experience</h2>
-<p>{{ data.experience }}</p>
-<h2>Education</h2>
-<p>{{ data.education }}</p>
-<h2>Skills</h2>
-<ul>
-    {% for skill in data.skills %}
-        <li>{{ skill.strip() }}</li>
-    {% endfor %}
-</ul>
+<div class="container">
+  <div class="header">
+    <div class="name">{{ data.name }}</div>
+    <div class="contact">
+      {{ data.email }} &nbsp; | &nbsp; {{ data.phone }}
+      {% if data.get('linkedin') %} &nbsp; | &nbsp; {{ data.linkedin }}{% endif %}
+    </div>
+  </div>
+
+  <!-- table-based two-column layout (works reliably with xhtml2pdf) -->
+  <table class="columns">
+    <tr>
+      <td class="col-left">
+        <!-- Left column: Skills, Education (compact) -->
+        <div class="section">
+          <div class="section-title">Skills</div>
+          <ul class="side-list">
+            {% for skill in data.skills %}
+              <li class="skill-chip">{{ skill.strip() }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Education</div>
+          <div class="side-list">
+            <strong>{{ data.get('education_school', 'Education') }}</strong><br>
+            <small>{{ data.get('education_degree', data.education) }}</small>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Contact</div>
+          <div class="side-list">
+            <div>{{ data.email }}</div>
+            <div>{{ data.phone }}</div>
+            {% if data.get('linkedin') %}<div>{{ data.linkedin }}</div>{% endif %}
+          </div>
+        </div>
+
+      </td>
+
+      <td class="col-right">
+        <!-- Right column: Summary, Experience, Projects -->
+        <div class="section">
+          <div class="section-title">Professional Summary</div>
+          <div class="summary word-wrap">{{ data.summary | replace('\n', '<br>') | safe }}</div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Experience</div>
+
+          <!-- If the experience is a single block of text, render it; otherwise, if you store structured items, adapt this loop -->
+          {% if data.experience is string %}
+            <div class="experience-item word-wrap">{{ data.experience | replace('\n', '<br>') | safe }}</div>
+          {% else %}
+            {% for exp in data.experience %}
+              <div class="experience-item clearfix">
+                <div class="item-title">{{ exp.title }}</div>
+                <div class="item-meta">{{ exp.dates }}</div>
+                <div class="item-sub">{{ exp.company }} &nbsp; — &nbsp; {{ exp.location }}</div>
+                <ul class="item-bullets">
+                  {% for b in exp.bullets %}
+                    <li>{{ b }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endfor %}
+          {% endif %}
+
+        </div>
+
+        <div class="section">
+          <div class="section-title">Projects</div>
+
+          <!-- Project entries (if you send them as text, they'll render below) -->
+          <div class="project">
+            <div class="item-title">ResumAI <span class="item-meta">Apr 2025 — Jun 2025</span></div>
+            <div class="item-sub">Flask, JavaScript, OpenAI API, xhtml2pdf</div>
+            <ul class="item-bullets">
+              <li>Built an AI-powered resume builder to generate, preview and download ATS-friendly PDFs.</li>
+              <li>Integrated API suggestions for summary and experience generation.</li>
+            </ul>
+          </div>
+
+          <!-- You can duplicate/loop project blocks similarly if you pass structured data -->
+
+        </div>
+
+      </td>
+    </tr>
+  </table>
+
+</div>
 </body>
 </html>
